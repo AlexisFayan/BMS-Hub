@@ -2,15 +2,97 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { LayoutDashboard, MessageSquare, GraduationCap, CheckCircle, Clock, Trophy, ArrowRight } from "lucide-react";
+import {
+  Server,
+  MessageSquare,
+  GraduationCap,
+  Newspaper,
+  BookOpen,
+  Shield,
+  HardDrive,
+  Cpu,
+  ArrowRight,
+  ClipboardList,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { modules } from "@/data/modules";
+
+type FeedItem = {
+  title: string;
+  link: string;
+  pubDate: string;
+  source: string;
+};
+
+const KEY_CONFIGS = [
+  { name: "XSmall-A", cores: "8c", ram: "256 Go", price: "1 302 €" },
+  { name: "Small-A", cores: "16c", ram: "256 Go", price: "1 244 €" },
+  { name: "Medium-B", cores: "32c", ram: "1024 Go", price: "1 566 €" },
+  { name: "XL-A", cores: "64c", ram: "1024 Go", price: "1 954 €" },
+  { name: "XXL-C", cores: "64c", ram: "4096 Go", price: "2 903 €" },
+];
+
+const QUICK_ACTIONS = [
+  {
+    label: "Poser une question",
+    href: "/chat",
+    icon: MessageSquare,
+    bg: "bg-blue-500",
+  },
+  {
+    label: "Consulter la référence",
+    href: "/reference",
+    icon: BookOpen,
+    bg: "bg-orange-500",
+  },
+  {
+    label: "Explorer les configs",
+    href: "/reference",
+    icon: Server,
+    bg: "bg-purple-500",
+  },
+  {
+    label: "Voir les actualités",
+    href: "/news",
+    icon: Newspaper,
+    bg: "bg-red-500",
+  },
+];
+
+const RESOURCES = [
+  {
+    label: "Process de commande",
+    detail: "14 étapes",
+    href: "/reference",
+    icon: ClipboardList,
+  },
+  {
+    label: "Stockage & IOPS",
+    detail: "Classes de performance",
+    href: "/reference",
+    icon: HardDrive,
+  },
+  {
+    label: "Sécurité & Compliance",
+    detail: "ISO 27001, SecNumCloud",
+    href: "/reference",
+    icon: Shield,
+  },
+  {
+    label: "GPU & IA",
+    detail: "H100, L40s, CRAY",
+    href: "/reference",
+    icon: Cpu,
+  },
+];
 
 export default function DashboardPage() {
   const [completedModules, setCompletedModules] = useState<number[]>([]);
+  const [news, setNews] = useState<FeedItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -19,142 +101,310 @@ export default function DashboardPage() {
     } catch {}
   }, []);
 
-  const progressPercent = Math.round((completedModules.length / modules.length) * 100);
-  const recentModules = modules.slice(0, 4);
+  useEffect(() => {
+    fetch("/api/news")
+      .then((r) => r.json())
+      .then((data) => {
+        setNews(data.slice(0, 4));
+        setNewsLoading(false);
+      })
+      .catch(() => setNewsLoading(false));
+  }, []);
+
+  const progressPercent = Math.round(
+    (completedModules.length / modules.length) * 100
+  );
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-8">
+      {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <LayoutDashboard className="h-6 w-6 text-primary" />
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-1">Suivez votre progression et accédez rapidement à vos outils.</p>
+        <h1 className="text-2xl font-bold">Bienvenue sur BMS Hub</h1>
+        <p className="text-muted-foreground mt-1">
+          Votre plateforme de référence Bare Metal Server Cloud Avenue
+        </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <GraduationCap className="h-5 w-5" />
+      {/* Top Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link href="/reference">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border-orange-200 bg-orange-50/50">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+                  <Server className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">15</p>
+                  <p className="text-xs text-muted-foreground">
+                    Configurations
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{completedModules.length}/{modules.length}</p>
-                <p className="text-xs text-muted-foreground">Modules complétés</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/chat">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border-blue-200 bg-blue-50/50">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">Chat IA</p>
+                  <p className="text-xs text-muted-foreground">Expert BMS</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">
-                <CheckCircle className="h-5 w-5" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/education">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border-green-200 bg-green-50/50">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">15</p>
+                  <p className="text-xs text-muted-foreground">
+                    Modules Formation
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{completedModules.length * 3}</p>
-                <p className="text-xs text-muted-foreground">Quiz réussis</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/news">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border-red-200 bg-red-50/50">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                  <Newspaper className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">Live</p>
+                  <p className="text-xs text-muted-foreground">
+                    Actualités
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                <MessageSquare className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">—</p>
-                <p className="text-xs text-muted-foreground">Conversations IA</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{completedModules.length * 20} min</p>
-                <p className="text-xs text-muted-foreground">Temps de formation</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      {/* Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
-            Progression de formation
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{completedModules.length} sur {modules.length} modules complétés</span>
-              <span className="font-medium">{progressPercent}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-2" />
-            {progressPercent === 100 && (
-              <p className="text-sm text-green-600 font-medium">Félicitations ! Vous avez complété toute la formation.</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick actions + Recent modules */}
+      {/* Main 2-col Grid */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Actions rapides</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Link href="/chat" className="block">
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Poser une question au Chat IA
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </Button>
-            </Link>
-            <Link href="/education" className="block">
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <GraduationCap className="h-4 w-4 text-primary" />
-                Continuer la formation
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Accès Rapide</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {QUICK_ACTIONS.map((action) => (
+                  <Link key={action.label} href={action.href}>
+                    <div className="flex flex-col items-center gap-2 rounded-xl border p-4 hover:shadow-md transition-shadow cursor-pointer text-center">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.bg} text-white`}
+                      >
+                        <action.icon className="h-5 w-5" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        {action.label}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Modules récents</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {recentModules.map((mod) => (
-              <Link key={mod.id} href={`/education/${mod.id}`} className="flex items-center justify-between py-2 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">{mod.title}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {completedModules.includes(mod.id) ? (
-                    <Badge variant="secondary" className="text-green-600 bg-green-50 text-xs">Complété</Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">À faire</Badge>
-                  )}
-                </div>
+          {/* BMS Configs Preview */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Server className="h-4 w-4 text-orange-500" />
+                Configurations BMS Gen11
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-muted-foreground">
+                      <th className="text-left py-2 font-medium">Modèle</th>
+                      <th className="text-left py-2 font-medium">Cœurs</th>
+                      <th className="text-left py-2 font-medium">RAM</th>
+                      <th className="text-right py-2 font-medium">Prix/mois</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {KEY_CONFIGS.map((cfg) => (
+                      <tr key={cfg.name} className="border-b last:border-0">
+                        <td className="py-2.5 font-medium">{cfg.name}</td>
+                        <td className="py-2.5">
+                          <Badge variant="secondary" className="text-xs">
+                            {cfg.cores}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 text-muted-foreground">
+                          {cfg.ram}
+                        </td>
+                        <td className="py-2.5 text-right font-medium text-orange-600">
+                          {cfg.price}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Link
+                href="/reference"
+                className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 mt-4 font-medium"
+              >
+                Voir toutes les configurations
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-            ))}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Latest News */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Newspaper className="h-4 w-4 text-red-500" />
+                Dernières Actualités
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {newsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : news.length > 0 ? (
+                <div className="space-y-3">
+                  {news.map((item, i) => (
+                    <a
+                      key={i}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border p-3 hover:shadow-sm transition-shadow"
+                    >
+                      <p className="text-sm font-medium line-clamp-2 leading-snug">
+                        {item.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <Badge variant="outline" className="text-[10px]">
+                          {item.source}
+                        </Badge>
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(item.pubDate).toLocaleDateString("fr-FR", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Aucune actualité disponible.
+                </p>
+              )}
+              <Link
+                href="/news"
+                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 mt-4 font-medium"
+              >
+                Voir toutes les actualités
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Formation Progress */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-green-500" />
+                Formation
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {completedModules.length} / {modules.length} modules
+                    complétés
+                  </span>
+                  <span className="font-medium">{progressPercent}%</span>
+                </div>
+                <Progress value={progressPercent} className="h-2" />
+                {progressPercent === 100 ? (
+                  <p className="text-sm text-green-600 font-medium">
+                    Formation complétée !
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {modules.length - completedModules.length} modules restants
+                  </p>
+                )}
+              </div>
+              <Link
+                href="/education"
+                className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 mt-4 font-medium"
+              >
+                Continuer la formation
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Bottom Resources */}
+      <div>
+        <h2 className="text-sm font-medium text-muted-foreground mb-3">
+          Ressources clés
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {RESOURCES.map((res) => (
+            <Link key={res.label} href={res.href}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                <CardContent className="p-4 flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <res.icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium leading-tight">
+                      {res.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {res.detail}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
