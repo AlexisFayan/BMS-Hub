@@ -29,7 +29,7 @@ type FeedItem = {
   pubDate: string;
   source: string;
   imageUrl: string;
-  relevant: boolean;
+  relevanceScore: number;
 };
 
 function parseXmlTag(xml: string, tag: string): string {
@@ -74,9 +74,17 @@ function extractImage(xml: string): string {
   return "";
 }
 
-function isRelevant(title: string, description: string): boolean {
-  const text = `${title} ${description}`.toLowerCase();
-  return RELEVANCE_KEYWORDS.some((kw) => text.includes(kw));
+function computeRelevanceScore(title: string, description: string): number {
+  const titleLower = title.toLowerCase();
+  const descLower = description.toLowerCase();
+  let matchCount = 0;
+  for (const kw of RELEVANCE_KEYWORDS) {
+    const inTitle = titleLower.includes(kw);
+    const inDesc = descLower.includes(kw);
+    if (inTitle) matchCount += 3;
+    else if (inDesc) matchCount += 1;
+  }
+  return Math.min(100, matchCount * 15);
 }
 
 function parseRSS(xml: string, source: string): FeedItem[] {
@@ -104,7 +112,7 @@ function parseRSS(xml: string, source: string): FeedItem[] {
         pubDate,
         source,
         imageUrl,
-        relevant: isRelevant(title, description),
+        relevanceScore: computeRelevanceScore(title, description),
       });
     }
 
@@ -188,9 +196,12 @@ export async function GET(_req: NextRequest) {
     }
   }
 
-  // Sort: relevant items first, then by date descending
-  allItems.sort((a, b) => {
-    if (a.relevant !== b.relevant) return a.relevant ? -1 : 1;
+  // Filter out completely irrelevant articles
+  const relevant = allItems.filter((item) => item.relevanceScore > 0);
+
+  // Sort by relevanceScore DESC, then by date DESC
+  relevant.sort((a, b) => {
+    if (a.relevanceScore !== b.relevanceScore) return b.relevanceScore - a.relevanceScore;
     try {
       return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
     } catch {
@@ -198,5 +209,5 @@ export async function GET(_req: NextRequest) {
     }
   });
 
-  return NextResponse.json(allItems.slice(0, 40));
+  return NextResponse.json(relevant.slice(0, 30));
 }

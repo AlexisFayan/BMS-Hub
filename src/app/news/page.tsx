@@ -5,13 +5,13 @@ import Link from "next/link";
 import {
   Newspaper,
   ExternalLink,
-  Clock,
-  Tag,
   Rss,
   Search,
   RefreshCw,
   BookOpen,
   ArrowRight,
+  Tag,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { staticArticles } from "@/data/news";
+import { relativeTimeFr } from "@/lib/utils";
 
 type RssItem = {
   title: string;
@@ -28,20 +29,16 @@ type RssItem = {
   pubDate: string;
   source: string;
   imageUrl: string;
-  relevant: boolean;
+  relevanceScore: number;
 };
 
-function formatDate(dateStr: string) {
-  try {
-    return new Date(dateStr).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
+const SOURCE_FILTERS = [
+  { label: "Toutes", value: "all" },
+  { label: "LeMagIT", value: "lemagit.fr" },
+  { label: "Silicon", value: "silicon.fr" },
+  { label: "ZDNet", value: "zdnet.fr" },
+  { label: "IT for Business", value: "itforbusiness.fr" },
+];
 
 const sentimentColors = {
   positif: "bg-green-50 text-green-700",
@@ -49,11 +46,27 @@ const sentimentColors = {
   technique: "bg-blue-50 text-blue-700",
 };
 
+function RelevanceDot({ score }: { score: number }) {
+  const color =
+    score > 70
+      ? "bg-green-500"
+      : score > 40
+        ? "bg-orange-400"
+        : "bg-gray-300";
+  return (
+    <span
+      className={`inline-block h-2 w-2 rounded-full ${color} shrink-0`}
+      title={`Pertinence : ${score}%`}
+    />
+  );
+}
+
 export default function NewsPage() {
   const [rssItems, setRssItems] = useState<RssItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("all");
 
   const fetchRss = () => {
     setRefreshing(true);
@@ -72,20 +85,31 @@ export default function NewsPage() {
   }, []);
 
   const filteredRss = useMemo(() => {
-    if (!searchQuery.trim()) return rssItems;
-    const q = searchQuery.toLowerCase();
-    return rssItems.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q) ||
-        item.source.toLowerCase().includes(q)
-    );
-  }, [rssItems, searchQuery]);
+    let items = rssItems;
+    if (sourceFilter !== "all") {
+      items = items.filter((item) => item.source.includes(sourceFilter));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.description.toLowerCase().includes(q) ||
+          item.source.toLowerCase().includes(q)
+      );
+    }
+    return items;
+  }, [rssItems, searchQuery, sourceFilter]);
+
+  const highRelevance = filteredRss.filter((item) => item.relevanceScore > 60);
+  const otherArticles = filteredRss.filter(
+    (item) => item.relevanceScore <= 60
+  );
 
   const veilleTechArticles = staticArticles.filter((a) => !a.isReference);
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -122,6 +146,7 @@ export default function NewsPage() {
 
         {/* RSS Tab */}
         <TabsContent value="rss" className="mt-6 space-y-4">
+          {/* Search + Refresh */}
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -146,6 +171,23 @@ export default function NewsPage() {
             </Button>
           </div>
 
+          {/* Source filter pills */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {SOURCE_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setSourceFilter(f.value)}
+                className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                  sourceFilter === f.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           {searchQuery && (
             <p className="text-sm text-muted-foreground">
               {filteredRss.length} résultat{filteredRss.length !== 1 ? "s" : ""}{" "}
@@ -154,20 +196,18 @@ export default function NewsPage() {
           )}
 
           {loading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="p-5">
-                    <div className="flex gap-4">
-                      <Skeleton className="w-32 h-24 rounded shrink-0 hidden sm:block" />
-                      <div className="flex-1">
-                        <Skeleton className="h-5 w-3/4 mb-3" />
-                        <Skeleton className="h-4 w-full mb-2" />
-                        <Skeleton className="h-4 w-1/2" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 py-3 px-4 border-b"
+                >
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                  <Skeleton className="h-3 w-20" />
+                </div>
               ))}
             </div>
           ) : filteredRss.length === 0 ? (
@@ -187,102 +227,70 @@ export default function NewsPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {filteredRss.map((item, i) => (
-                <a
-                  key={i}
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <Card className="hover:shadow-md transition-all group overflow-hidden">
-                    <CardContent className="p-0">
-                      <div className="flex">
-                        {item.imageUrl ? (
-                          <div className="w-36 h-28 shrink-0 bg-muted overflow-hidden hidden sm:block">
-                            <img
-                              src={item.imageUrl}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-36 h-28 shrink-0 bg-gradient-to-br from-primary/10 via-primary/5 to-accent hidden sm:flex items-center justify-center">
-                            <Newspaper className="h-8 w-8 text-primary/20" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium group-hover:text-primary transition-colors line-clamp-2 text-sm">
-                                {item.title}
-                              </h3>
-                              {item.description && (
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                  {item.description}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  {item.source}
-                                </Badge>
-                                {item.relevant && (
-                                  <Badge className="text-xs bg-orange-50 text-orange-700 hover:bg-orange-100">
-                                    Cloud / Infra
-                                  </Badge>
-                                )}
-                                {item.pubDate && (
-                                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3" />{" "}
-                                    {formatDate(item.pubDate)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </a>
-              ))}
+            <div className="space-y-6">
+              {/* High relevance section */}
+              {highRelevance.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                    Haute pertinence
+                  </h3>
+                  <div className="border rounded-lg divide-y">
+                    {highRelevance.map((item, i) => (
+                      <RssRow key={`high-${i}`} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Other articles section */}
+              {otherArticles.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                    Autres actualités
+                  </h3>
+                  <div className="border rounded-lg divide-y">
+                    {otherArticles.map((item, i) => (
+                      <RssRow key={`other-${i}`} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>
 
         {/* Veille Tech Tab */}
         <TabsContent value="articles" className="mt-6">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-4">
             {veilleTechArticles.map((article) => (
               <Card
                 key={article.id}
-                className="overflow-hidden hover:shadow-md transition-all"
+                className="hover:shadow-md transition-all"
               >
-                <div className="h-36 bg-gradient-to-br from-primary/10 via-primary/5 to-accent flex items-center justify-center">
-                  <BookOpen className="h-10 w-10 text-primary/30" />
-                </div>
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={sentimentColors[article.sentiment]}>
-                      {article.sentiment}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {article.category}
-                    </Badge>
-                  </div>
-                  <h3 className="font-semibold line-clamp-2 text-sm">
-                    {article.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {article.description}
-                  </p>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" /> {formatDate(article.date)}
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground mt-0.5">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <h3 className="font-semibold line-clamp-2 text-sm leading-snug">
+                        {article.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {article.description}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={sentimentColors[article.sentiment]}>
+                          {article.sentiment}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {article.category}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {relativeTimeFr(article.date)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -291,5 +299,35 @@ export default function NewsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function RssRow({ item }: { item: RssItem }) {
+  return (
+    <a
+      href={item.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-4 py-3 px-4 hover:bg-muted/50 transition-colors group"
+    >
+      <RelevanceDot score={item.relevanceScore} />
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+          {item.title}
+        </h3>
+        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {item.description}
+        </p>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <Badge variant="outline" className="text-[10px] hidden sm:inline-flex">
+          {item.source}
+        </Badge>
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {relativeTimeFr(item.pubDate)}
+        </span>
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </a>
   );
 }

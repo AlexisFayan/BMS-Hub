@@ -19,12 +19,14 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { modules } from "@/data/modules";
+import { relativeTimeFr } from "@/lib/utils";
 
 type FeedItem = {
   title: string;
   link: string;
   pubDate: string;
   source: string;
+  relevanceScore: number;
 };
 
 const KEY_CONFIGS = [
@@ -104,8 +106,11 @@ export default function DashboardPage() {
   useEffect(() => {
     fetch("/api/news")
       .then((r) => r.json())
-      .then((data) => {
-        setNews(data.slice(0, 4));
+      .then((data: FeedItem[]) => {
+        const relevant = data
+          .filter((item) => item.relevanceScore > 50)
+          .slice(0, 4);
+        setNews(relevant);
         setNewsLoading(false);
       })
       .catch(() => setNewsLoading(false));
@@ -298,35 +303,44 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : news.length > 0 ? (
-                <div className="space-y-3">
+                <div className="divide-y">
                   {news.map((item, i) => (
                     <a
                       key={i}
                       href={item.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-lg border p-3 hover:shadow-sm transition-shadow"
+                      className="flex items-center gap-3 py-2.5 hover:bg-muted/50 transition-colors -mx-1 px-1 rounded"
                     >
-                      <p className="text-sm font-medium line-clamp-2 leading-snug">
-                        {item.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <Badge variant="outline" className="text-[10px]">
-                          {item.source}
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground">
-                          {new Date(item.pubDate).toLocaleDateString("fr-FR", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </span>
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full shrink-0 ${
+                          item.relevanceScore > 70
+                            ? "bg-green-500"
+                            : "bg-orange-400"
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1 leading-snug">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {item.source}
+                          </Badge>
+                          <span className="text-[11px] text-muted-foreground">
+                            {relativeTimeFr(item.pubDate)}
+                          </span>
+                        </div>
                       </div>
                     </a>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Aucune actualité disponible.
+                  Pas d&apos;actualités pertinentes pour le moment.
                 </p>
               )}
               <Link
