@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const RSS_FEEDS = [
-  "https://www.lemondeinformatique.fr/flux-rss/thematique/cloud/rss.xml",
+  "https://www.lemagit.fr/rss/ContentSyndication.xml",
   "https://www.silicon.fr/feed",
   "https://www.zdnet.fr/feeds/rss/actualites/",
+  "https://www.itforbusiness.fr/feed",
+];
+
+const RELEVANCE_KEYWORDS = [
+  "cloud", "serveur", "datacenter", "data center", "infrastructure",
+  "bms", "bare metal", "hpe", "vmware", "orange", "souverain",
+  "ia", "intelligence artificielle", "gpu", "nvidia", "kubernetes",
+  "virtualisation", "stockage", "réseau", "sécurité", "cybersécurité",
+  "sauvegarde", "backup", "linux", "windows server", "conteneur",
+  "docker", "openshift", "ansible", "terraform", "devops",
+  "hébergement", "hosting", "colocation", "edge", "hybrid",
+  "multicloud", "saas", "iaas", "paas", "secnumcloud",
+  "rgpd", "conformité", "compliance", "migration", "sap",
+  "oracle", "base de données", "database", "performance",
+  "scalabilité", "haute disponibilité", "disaster recovery",
+  "réseau", "firewall", "load balancer", "vpn", "nsx",
 ];
 
 type FeedItem = {
@@ -13,6 +29,7 @@ type FeedItem = {
   pubDate: string;
   source: string;
   imageUrl: string;
+  relevant: boolean;
 };
 
 function parseXmlTag(xml: string, tag: string): string {
@@ -57,6 +74,11 @@ function extractImage(xml: string): string {
   return "";
 }
 
+function isRelevant(title: string, description: string): boolean {
+  const text = `${title} ${description}`.toLowerCase();
+  return RELEVANCE_KEYWORDS.some((kw) => text.includes(kw));
+}
+
 function parseRSS(xml: string, source: string): FeedItem[] {
   const items: FeedItem[] = [];
   let searchFrom = 0;
@@ -75,13 +97,59 @@ function parseRSS(xml: string, source: string): FeedItem[] {
     const imageUrl = extractImage(itemXml);
 
     if (title) {
-      items.push({ title, link, description: description.slice(0, 200), pubDate, source, imageUrl });
+      items.push({
+        title,
+        link,
+        description: description.slice(0, 200),
+        pubDate,
+        source,
+        imageUrl,
+        relevant: isRelevant(title, description),
+      });
     }
 
     searchFrom = itemEnd + 7;
   }
 
   return items;
+}
+
+function detectEncoding(buffer: ArrayBuffer, contentType: string): string {
+  // Check Content-Type header for charset
+  const charsetMatch = contentType.match(/charset=([^\s;]+)/i);
+  if (charsetMatch) {
+    return charsetMatch[1].toLowerCase().replace(/['"]/g, "");
+  }
+
+  // Check XML declaration for encoding
+  const preview = new TextDecoder("ascii").decode(buffer.slice(0, 200));
+  const encodingMatch = preview.match(/encoding=["']([^"']+)["']/i);
+  if (encodingMatch) {
+    return encodingMatch[1].toLowerCase();
+  }
+
+  return "utf-8";
+}
+
+function decodeBuffer(buffer: ArrayBuffer, encoding: string): string {
+  // Map common encoding names to TextDecoder-compatible labels
+  const encodingMap: Record<string, string> = {
+    "iso-8859-15": "iso-8859-15",
+    "iso-8859-1": "iso-8859-1",
+    "latin1": "iso-8859-1",
+    "latin-1": "iso-8859-1",
+    "windows-1252": "windows-1252",
+    "utf-8": "utf-8",
+  };
+
+  const decoderLabel = encodingMap[encoding] || encoding;
+
+  try {
+    return new TextDecoder(decoderLabel).decode(buffer);
+  } catch {
+    // Fallback to utf-8 if encoding is not supported
+    return new TextDecoder("utf-8").decode(buffer);
+  }
 }
 
 export async function GET(_req: NextRequest) {
@@ -98,7 +166,13 @@ export async function GET(_req: NextRequest) {
         });
         clearTimeout(timeout);
         if (!res.ok) return [];
-        const xml = await res.text();
+
+        // Use arrayBuffer to handle non-UTF-8 encodings
+        const buffer = await res.arrayBuffer();
+        const contentType = res.headers.get("content-type") || "";
+        const encoding = detectEncoding(buffer, contentType);
+        const xml = decodeBuffer(buffer, encoding);
+
         const source = new URL(url).hostname.replace("www.", "");
         return parseRSS(xml, source);
       } catch {
@@ -114,8 +188,9 @@ export async function GET(_req: NextRequest) {
     }
   }
 
-  // Sort by date descending
+  // Sort: relevant items first, then by date descending
   allItems.sort((a, b) => {
+    if (a.relevant !== b.relevant) return a.relevant ? -1 : 1;
     try {
       return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
     } catch {
@@ -123,5 +198,5 @@ export async function GET(_req: NextRequest) {
     }
   });
 
-  return NextResponse.json(allItems.slice(0, 30));
+  return NextResponse.json(allItems.slice(0, 40));
 }
