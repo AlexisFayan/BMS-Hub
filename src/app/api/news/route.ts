@@ -12,6 +12,7 @@ type FeedItem = {
   description: string;
   pubDate: string;
   source: string;
+  imageUrl: string;
 };
 
 function parseXmlTag(xml: string, tag: string): string {
@@ -32,6 +33,30 @@ function parseXmlTag(xml: string, tag: string): string {
   return content;
 }
 
+function extractImage(xml: string): string {
+  // Try media:content
+  const mediaMatch = xml.match(/<media:content[^>]+url=["']([^"']+)["']/);
+  if (mediaMatch) return mediaMatch[1];
+
+  // Try media:thumbnail
+  const thumbMatch = xml.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/);
+  if (thumbMatch) return thumbMatch[1];
+
+  // Try enclosure with image type
+  const encMatch = xml.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image/);
+  if (encMatch) return encMatch[1];
+
+  // Try enclosure url regardless of type
+  const encMatch2 = xml.match(/<enclosure[^>]+url=["']([^"']+)["']/);
+  if (encMatch2) return encMatch2[1];
+
+  // Try image tag in content
+  const imgMatch = xml.match(/<img[^>]+src=["']([^"']+)["']/);
+  if (imgMatch) return imgMatch[1];
+
+  return "";
+}
+
 function parseRSS(xml: string, source: string): FeedItem[] {
   const items: FeedItem[] = [];
   let searchFrom = 0;
@@ -47,9 +72,10 @@ function parseRSS(xml: string, source: string): FeedItem[] {
     const link = parseXmlTag(itemXml, "link");
     const description = parseXmlTag(itemXml, "description");
     const pubDate = parseXmlTag(itemXml, "pubDate");
+    const imageUrl = extractImage(itemXml);
 
     if (title) {
-      items.push({ title, link, description: description.slice(0, 200), pubDate, source });
+      items.push({ title, link, description: description.slice(0, 200), pubDate, source, imageUrl });
     }
 
     searchFrom = itemEnd + 7;

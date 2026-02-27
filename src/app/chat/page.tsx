@@ -16,12 +16,14 @@ type Message = {
 };
 
 const suggestions = [
-  "C'est quoi un Bare Metal Server ?",
-  "Comment provisionner un nouveau BMS ?",
-  "Quelle est la différence entre BMS et VM ?",
-  "Comment monitorer un BMS ?",
-  "Les SLA et garanties BMS",
+  "Quelles sont les 15 configurations BMS Gen11 ?",
+  "Comment commander un nouveau BMS ?",
+  "Quel stockage choisir pour mon BMS ?",
+  "BMS vs VM vs Container ?",
+  "Quels OS sont supportés Gen11 ?",
   "Architecture réseau BMS",
+  "BMS GPU pour l'IA",
+  "Benchmarks BMS vs OVH/AWS",
 ];
 
 export default function ChatPage() {

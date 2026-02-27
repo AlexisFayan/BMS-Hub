@@ -15,6 +15,7 @@ type RssItem = {
   description: string;
   pubDate: string;
   source: string;
+  imageUrl: string;
 };
 
 function formatDate(dateStr: string) {
@@ -94,26 +95,39 @@ export default function NewsPage() {
             <div className="space-y-3">
               {rssItems.map((item, i) => (
                 <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="block">
-                  <Card className="hover:shadow-md transition-all group">
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium group-hover:text-primary transition-colors line-clamp-2">
-                            {item.title}
-                          </h3>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
-                          )}
-                          <div className="flex items-center gap-3 mt-2">
-                            <Badge variant="outline" className="text-xs">{item.source}</Badge>
-                            {item.pubDate && (
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" /> {formatDate(item.pubDate)}
-                              </span>
-                            )}
+                  <Card className="hover:shadow-md transition-all group overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="flex">
+                        {item.imageUrl ? (
+                          <div className="w-32 h-28 shrink-0 bg-muted overflow-hidden hidden sm:block">
+                            <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-32 h-28 shrink-0 bg-gradient-to-br from-primary/10 via-primary/5 to-accent hidden sm:flex items-center justify-center">
+                            <Newspaper className="h-8 w-8 text-primary/20" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium group-hover:text-primary transition-colors line-clamp-2">
+                                {item.title}
+                              </h3>
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+                              )}
+                              <div className="flex items-center gap-3 mt-2">
+                                <Badge variant="outline" className="text-xs">{item.source}</Badge>
+                                {item.pubDate && (
+                                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3" /> {formatDate(item.pubDate)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                         </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </CardContent>
                   </Card>
