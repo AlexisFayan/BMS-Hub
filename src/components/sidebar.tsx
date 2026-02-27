@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Server, LayoutDashboard, MessageSquare, GraduationCap, Newspaper, User, LogOut, Menu } from "lucide-react";
+import { Server, LayoutDashboard, MessageSquare, GraduationCap, BookOpen, Newspaper, User, LogOut, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/chat", label: "Chat IA", icon: MessageSquare },
   { href: "/education", label: "Formation", icon: GraduationCap },
+  { href: "/reference", label: "Référence BMS", icon: BookOpen },
   { href: "/news", label: "Actualités", icon: Newspaper },
   { href: "/profile", label: "Profil", icon: User },
 ];

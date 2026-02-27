@@ -634,4 +634,96 @@ Les mises à jour de l'OS sont de la responsabilité du client. Cloud Avenue met
     sentiment: "technique",
     isReference: true,
   },
+  {
+    id: "veille-cloud-souverain-2025",
+    title: "Cloud souverain en 2025 : enjeux et perspectives pour les entreprises françaises",
+    description:
+      "Analyse des évolutions du marché du cloud souverain en France, entre SecNumCloud, EUCS et stratégies multi-cloud.",
+    content: `Le marché du cloud souverain connaît une accélération significative en 2025, porté par les exigences réglementaires et la prise de conscience des risques liés à la dépendance aux hyperscalers américains.
+
+## Contexte réglementaire
+
+L'adoption du schéma EUCS (European Union Cybersecurity Certification Scheme) et le renforcement de SecNumCloud poussent les entreprises à reconsidérer leurs stratégies cloud. Les secteurs régulés (santé, finance, défense, secteur public) sont en première ligne.
+
+## Tendances clés
+
+- Migration croissante vers des clouds qualifiés SecNumCloud
+- Stratégies multi-cloud combinant hyperscalers et clouds souverains
+- Montée en puissance de l'IA souveraine (hébergement des modèles en France)
+- Demande accrue pour le Bare Metal Server dans les environnements régulés`,
+    date: "2025-02-28",
+    category: "Cloud souverain",
+    imageUrl: "",
+    sentiment: "positif",
+    isReference: false,
+  },
+  {
+    id: "veille-ia-infrastructure-2025",
+    title: "Infrastructure IA : la course aux GPU redéfinit le marché des serveurs dédiés",
+    description:
+      "Comment la demande en GPU pour l'IA transforme l'offre de serveurs bare metal chez les fournisseurs cloud.",
+    content: `La demande explosive en capacité de calcul GPU pour l'intelligence artificielle redessine le marché des serveurs physiques dédiés. Les fournisseurs cloud adaptent leurs offres à grande vitesse.
+
+## Le marché GPU en 2025
+
+NVIDIA domine avec les H100 et les nouvelles générations (B200, GB200). La pénurie de GPU continue d'impacter les délais de livraison, rendant les offres de BMS GPU particulièrement stratégiques.
+
+## Impact sur le bare metal
+
+- Les configurations GPU deviennent le segment à plus forte croissance du BMS
+- Les prix des serveurs H100 restent élevés mais se stabilisent
+- L'interconnexion Infiniband devient un différenciateur clé
+- La souveraineté des données d'entraînement IA est un argument majeur en Europe`,
+    date: "2025-02-20",
+    category: "IA & Infrastructure",
+    imageUrl: "",
+    sentiment: "positif",
+    isReference: false,
+  },
+  {
+    id: "veille-intel-xeon-6-2025",
+    title: "Intel Xeon 6 : quelles performances attendre pour les prochaines générations BMS ?",
+    description:
+      "Analyse des processeurs Intel Xeon de 6ème génération (Granite Rapids) et leur impact potentiel sur les serveurs bare metal.",
+    content: `Intel prépare la 6ème génération de Xeon Scalable (nom de code Granite Rapids) avec des améliorations significatives en performances et efficacité énergétique. Quelles implications pour les BMS ?
+
+## Nouveautés attendues
+
+- Jusqu'à 128 cœurs par socket (vs 64 actuellement)
+- Amélioration de 20-40% en performances par watt
+- Support DDR5 étendu avec bande passante accrue
+- Nouvelles instructions pour l'IA (AMX amélioré)
+
+## Impact pour Cloud Avenue
+
+Les prochaines générations de BMS (Gen12) pourront bénéficier de ces avancées, offrant plus de cœurs et de mémoire dans le même châssis HPE Synergy.`,
+    date: "2025-02-10",
+    category: "Hardware",
+    imageUrl: "",
+    sentiment: "neutre",
+    isReference: false,
+  },
+  {
+    id: "veille-sap-hana-migration-2027",
+    title: "Migration SAP ECC vers S/4HANA : le compte à rebours 2027 s'accélère",
+    description:
+      "Avec la fin du support SAP ECC en 2027, les entreprises accélèrent leur migration vers S/4HANA — le BMS est un choix privilégié.",
+    content: `SAP a confirmé la fin de maintenance de SAP ECC pour 2027. Les entreprises doivent migrer vers S/4HANA, une opportunité majeure pour les fournisseurs de serveurs bare metal haute mémoire.
+
+## Pourquoi le BMS pour SAP HANA ?
+
+SAP HANA est une base de données in-memory qui nécessite de grandes quantités de RAM physique. Le BMS offre un accès direct à la mémoire sans overhead de virtualisation, ce qui est critique pour les performances HANA.
+
+## Chiffres clés
+
+- Plus de 30 000 clients SAP ECC concernés en Europe
+- Les configurations haute mémoire (>1 To RAM) sont les plus demandées
+- Les BMS XXL certifiés SAP HANA (jusqu'à 4 To RAM) répondent aux plus grands déploiements
+- Le TCO BMS est souvent inférieur de 20-30% par rapport aux hyperscalers pour SAP HANA`,
+    date: "2025-01-30",
+    category: "SAP & ERP",
+    imageUrl: "",
+    sentiment: "technique",
+    isReference: false,
+  },
 ];

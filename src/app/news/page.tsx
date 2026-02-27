@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   Newspaper,
   ExternalLink,
@@ -8,11 +9,9 @@ import {
   Tag,
   Rss,
   Search,
-  Server,
   RefreshCw,
   BookOpen,
-  ChevronDown,
-  ChevronUp,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +54,6 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
 
   const fetchRss = () => {
     setRefreshing(true);
@@ -84,19 +82,27 @@ export default function NewsPage() {
     );
   }, [rssItems, searchQuery]);
 
-  const referenceArticles = staticArticles.filter((a) => a.isReference);
   const veilleTechArticles = staticArticles.filter((a) => !a.isReference);
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Newspaper className="h-6 w-6 text-primary" />
-          Actualités & Référence BMS
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Veille tech, articles de référence et documentation BMS Cloud Avenue.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Newspaper className="h-6 w-6 text-primary" />
+            Actualités
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Veille technologique et actualités cloud, infrastructure et BMS.
+          </p>
+        </div>
+        <Link href="/reference">
+          <Button variant="outline" size="sm" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Consulter la référence BMS
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue="rss">
@@ -108,9 +114,6 @@ export default function NewsPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
             </span>
-          </TabsTrigger>
-          <TabsTrigger value="reference" className="gap-2">
-            <Server className="h-3.5 w-3.5" /> Référence BMS
           </TabsTrigger>
           <TabsTrigger value="articles" className="gap-2">
             <Tag className="h-3.5 w-3.5" /> Veille Tech
@@ -252,128 +255,10 @@ export default function NewsPage() {
           )}
         </TabsContent>
 
-        {/* BMS Reference Tab */}
-        <TabsContent value="reference" className="mt-6">
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground">
-              Articles de référence avec les données officielles BMS Cloud
-              Avenue. Cliquez pour lire le contenu détaillé.
-            </p>
-          </div>
-          <div className="space-y-4">
-            {referenceArticles.map((article) => (
-              <Card
-                key={article.id}
-                className="overflow-hidden hover:shadow-md transition-all"
-              >
-                <CardContent className="p-0">
-                  <button
-                    onClick={() =>
-                      setExpandedArticle(
-                        expandedArticle === article.id ? null : article.id
-                      )
-                    }
-                    className="w-full text-left p-5"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge
-                            className={sentimentColors[article.sentiment]}
-                          >
-                            {article.sentiment}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {article.category}
-                          </Badge>
-                          <Badge className="text-xs bg-orange-50 text-orange-700">
-                            Référence BMS
-                          </Badge>
-                        </div>
-                        <h3 className="font-semibold">{article.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {article.description}
-                        </p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                          <Clock className="h-3 w-3" />{" "}
-                          {formatDate(article.date)}
-                        </div>
-                      </div>
-                      <div className="shrink-0 mt-1">
-                        {expandedArticle === article.id ? (
-                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                  {expandedArticle === article.id && (
-                    <div className="px-5 pb-5 border-t">
-                      <div className="pt-4 prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-table:text-sm">
-                        {article.content.split("\n").map((line, i) => {
-                          if (line.startsWith("## "))
-                            return (
-                              <h2
-                                key={i}
-                                className="text-lg font-semibold mt-6 mb-3 text-foreground"
-                              >
-                                {line.replace("## ", "")}
-                              </h2>
-                            );
-                          if (line.startsWith("### "))
-                            return (
-                              <h3
-                                key={i}
-                                className="text-base font-semibold mt-4 mb-2 text-foreground"
-                              >
-                                {line.replace("### ", "")}
-                              </h3>
-                            );
-                          if (line.startsWith("| "))
-                            return (
-                              <div
-                                key={i}
-                                className="font-mono text-xs text-muted-foreground"
-                              >
-                                {line}
-                              </div>
-                            );
-                          if (line.startsWith("- ") || line.startsWith("* "))
-                            return (
-                              <li
-                                key={i}
-                                className="text-sm text-muted-foreground ml-4"
-                              >
-                                {line.replace(/^[-*] /, "")}
-                              </li>
-                            );
-                          if (line.trim() === "") return <br key={i} />;
-                          return (
-                            <p
-                              key={i}
-                              className="text-sm text-muted-foreground leading-relaxed"
-                            >
-                              {line}
-                            </p>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
         {/* Veille Tech Tab */}
         <TabsContent value="articles" className="mt-6">
           <div className="grid md:grid-cols-2 gap-6">
-            {(veilleTechArticles.length > 0
-              ? veilleTechArticles
-              : referenceArticles.slice(0, 4)
-            ).map((article) => (
+            {veilleTechArticles.map((article) => (
               <Card
                 key={article.id}
                 className="overflow-hidden hover:shadow-md transition-all"
